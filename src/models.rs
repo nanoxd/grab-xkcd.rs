@@ -1,6 +1,8 @@
+use anyhow::Result;
 use clap::Clap;
-use serde_derive::Deserialize;
-use std::convert::TryFrom;
+use serde_derive::{Deserialize, Serialize};
+use std::{convert::TryFrom, fmt};
+use url::Url;
 
 #[derive(Debug, Clap)]
 pub struct Options {
@@ -13,8 +15,8 @@ pub struct Options {
     pub output: OutputFormat,
 
     /// The comic to loads
-    #[clap(long, short, default_value = "0")]
-    pub num: usize,
+    #[clap(long, short)]
+    pub num: Option<usize>,
 
     /// Save image file to current directory
     #[clap(long, short)]
@@ -50,12 +52,48 @@ impl TryFrom<String> for ComicResponse {
     }
 }
 
+#[derive(Serialize)]
 pub struct Comic {
     pub title: String,
     pub num: usize,
     pub date: String,
     pub desc: String,
     pub img_url: String,
+}
+
+impl Comic {
+    pub fn print(&self, of: OutputFormat) -> Result<()> {
+        match of {
+            OutputFormat::Text => println!("{}", self),
+            OutputFormat::Json => println!("{}", serde_json::to_string(self)?),
+        }
+
+        Ok(())
+    }
+
+    pub fn save(&self) -> Result<()> {
+        let url = Url::parse(&*self.img_url)?;
+        let img_name = url.path_segments().unwrap().last().unwrap();
+        let path = std::env::current_dir()?;
+        let path = path.join(img_name);
+        let mut file = std::fs::File::create(path)?;
+
+        todo!("Actually download the file")
+    }
+}
+
+impl fmt::Display for Comic {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Title: {}\n\
+            Comic No: {}\n\
+            Date: {}\n\
+            Description: {}\n\
+            Image: {}\n",
+            self.title, self.num, self.date, self.desc, self.img_url
+        )
+    }
 }
 
 impl From<ComicResponse> for Comic {
