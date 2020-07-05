@@ -1,31 +1,16 @@
 use clap::Clap;
+use xkcd_client::XkcdClient;
 
-#[derive(Debug, Clap)]
-pub struct Options {
-    /// Sets a connection timeout
-    #[clap(long, short, default_value = "60")]
-    pub timeout: u64,
+mod models;
+mod xkcd_client;
 
-    /// Prints output in the given format
-    #[clap(long, short, arg_enum, default_value = "text")]
-    pub output: OutputFormat,
+const BASE_URL: &str = "https://xkcd.com";
 
-    /// The comic to loads
-    #[clap(long, short, default_value = "0")]
-    pub num: usize,
-
-    /// Save image file to current directory
-    #[clap(long, short)]
-    pub save: bool,
-}
-
-#[derive(Debug, Clap, Copy, Clone)]
-pub enum OutputFormat {
-    Json,
-    Text,
-}
+/// XKCD API treats this number as the newest item
+const LATEST_COMIC: usize = 0;
 
 fn main() {
-    let args = Options::parse();
-    println!("{:?}", &args);
+    let options = models::Options::parse();
+    let client = XkcdClient::new(options);
+    client.run();
 }
