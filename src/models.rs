@@ -1,4 +1,6 @@
 use clap::Clap;
+use serde_derive::Deserialize;
+use std::convert::TryFrom;
 
 #[derive(Debug, Clap)]
 pub struct Options {
@@ -23,4 +25,47 @@ pub struct Options {
 pub enum OutputFormat {
     Json,
     Text,
+}
+
+#[derive(Deserialize)]
+pub struct ComicResponse {
+    pub month: String,
+    pub num: usize,
+    pub link: String,
+    pub year: String,
+    pub news: String,
+    pub safe_title: String,
+    pub transcript: String,
+    pub alt: String,
+    pub img: String,
+    pub title: String,
+    pub day: String,
+}
+
+impl TryFrom<String> for ComicResponse {
+    type Error = anyhow::Error;
+
+    fn try_from(json: String) -> Result<Self, Self::Error> {
+        serde_json::from_str(&json).map_err(|e| e.into())
+    }
+}
+
+pub struct Comic {
+    pub title: String,
+    pub num: usize,
+    pub date: String,
+    pub desc: String,
+    pub img_url: String,
+}
+
+impl From<ComicResponse> for Comic {
+    fn from(cr: ComicResponse) -> Self {
+        Comic {
+            title: cr.title,
+            num: cr.num,
+            date: format!("{}-{}-{}", cr.day, cr.month, cr.year),
+            desc: cr.alt,
+            img_url: cr.img,
+        }
+    }
 }
