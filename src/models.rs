@@ -1,6 +1,7 @@
 use anyhow::Result;
 use clap::Clap;
 use serde_derive::{Deserialize, Serialize};
+use std::io::Write;
 use std::{convert::TryFrom, fmt};
 use url::Url;
 
@@ -78,7 +79,8 @@ impl Comic {
         let path = path.join(img_name);
         let mut file = std::fs::File::create(path)?;
 
-        todo!("Actually download the file")
+        let body = reqwest::blocking::get(&self.img_url)?;
+        file.write_all(&*body.bytes()?).map_err(|e| e.into())
     }
 }
 
